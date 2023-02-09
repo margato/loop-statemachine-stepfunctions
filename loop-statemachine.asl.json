@@ -1,0 +1,75 @@
+{
+  "Comment": "Loop State Machine",
+  "StartAt": "Prepare Loop",
+  "States": {
+    "Prepare Loop": {
+      "Type": "Pass",
+      "Parameters": {
+        "arrayLength.$": "States.ArrayLength($.inputArray)",
+        "loop": {
+          "index": 0,
+          "increment": 1
+        }
+      },
+      "ResultPath": "$.workflow",
+      "Next": "Check Loop Condition"
+    },
+    "Check Loop Condition": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.workflow.loop.index",
+          "NumericGreaterThanEqualsPath": "$.workflow.arrayLength",
+          "Comment": "index >= array.Length",
+          "Next": "Number Not Found"
+        }
+      ],
+      "Default": "Process Current Number"
+    },
+    "Number Not Found": {
+      "Type": "Pass",
+      "End": true,
+      "Result": {
+        "result": null
+      }
+    },
+    "Process Current Number": {
+      "Type": "Pass",
+      "Next": "Check Number",
+      "ResultPath": "$.processing",
+      "Parameters": {
+        "currentItem.$": "States.ArrayGetItem($.inputArray, $.workflow.loop.index)"
+      }
+    },
+    "Check Number": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.processing.currentItem",
+          "NumericEqualsPath": "$.numberToFind",
+          "Comment": "Number Found",
+          "Next": "Number Found"
+        }
+      ],
+      "Default": "Increment Index"
+    },
+    "Number Found": {
+      "Type": "Pass",
+      "End": true,
+      "Parameters": {
+        "result": {
+          "position.$": "$.workflow.loop.index"
+        }
+      }
+    },
+    "Increment Index": {
+      "Type": "Pass",
+      "Next": "Check Loop Condition",
+      "Parameters": {
+        "index.$": "States.MathAdd($.workflow.loop.index, $.workflow.loop.increment)",
+        "increment": 1
+      },
+      "ResultPath": "$.workflow.loop"
+    }
+  }
+}
